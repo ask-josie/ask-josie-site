@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>anything — just ask josie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#051650;--gold:#D6A300;--paper:#fff;--muted:#f6f7fb}
+    *{box-sizing:border-box} html,body{margin:0;padding:0;scroll-behavior:smooth}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6}
+    a{color:inherit;text-decoration:none}
+
+    /* header with dropdown */
+    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #e8eaf3;z-index:20}
+    .wrap{max-width:1120px;margin:auto;padding:0 20px}
+    nav{display:flex;align-items:center;justify-content:space-between;height:70px}
+    .brand{font-weight:800;letter-spacing:.02em;text-transform:lowercase}
+
+    .menu{display:flex;align-items:center;gap:18px;font-weight:600}
+    .menu > a{opacity:.85}
+    .menu > a:hover{opacity:1}
+    .dropdown{position:relative}
+    .dropdown > button{background:#fff;border:1px solid #e8eaf3;border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-weight:700}
+    .dropdown-menu{position:absolute;top:110%;left:0;min-width:220px;background:#fff;border:1px solid #e8eaf3;border-radius:12px;box-shadow:0 10px 24px rgba(5,22,80,.12);display:none;padding:8px}
+    .dropdown:hover .dropdown-menu{display:block}
+    .dropdown-menu a{display:block;padding:10px 12px;border-radius:8px}
+    .dropdown-menu a:hover{background:#f6f7fb}
+
+    /* hero & layout */
+    .hero{padding:72px 0;background:linear-gradient(180deg,#fff 0,var(--muted) 100%)}
+    .kicker{display:inline-block;background:var(--gold);color:#000;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em;text-transform:lowercase}
+    h1{font-size:40px;margin:12px 0}
+    .content{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:start}
+    .lead{font-size:20px;max-width:72ch;color:#2c2f47}
+    .block{background:#fff;border:1px solid #eaecf4;border-radius:16px;padding:20px}
+
+    section{padding:72px 0;border-top:1px solid #eaecf4}
+    h2{font-size:28px;margin:0 0 14px;text-transform:lowercase}
+
+    /* collage grid */
+    .collage{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:120px;gap:10px}
+    .tile{border-radius:14px;border:1px solid #eaecf4;background:#fff;overflow:hidden}
+    .tile img{width:100%;height:100%;object-fit:cover;display:block}
+    .w2{grid-column:span 2}.w3{grid-column:span 3}.w4{grid-column:span 4}
+    .h2{grid-row:span 2}.h3{grid-row:span 3}
+
+    /* footer */
+    footer{padding:46px 0;background:#0b1337;color:#fff}
+    @media (max-width:980px){
+      .content{grid-template-columns:1fr}
+      .collage{grid-template-columns:repeat(3,1fr);grid-auto-rows:100px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <nav>
+        <a href="index.html" class="brand">ask josie</a>
+        <div class="menu">
+          <a href="index.html">home</a>
+          <div class="dropdown">
+            <button type="button">services ▾</button>
+            <div class="dropdown-menu" role="menu">
+              <a href="home-organization.html">home organization</a>
+              <a href="home-staging.html">home staging</a>
+              <a href="anything-just-ask.html">anything — just ask josie</a>
+            </div>
+          </div>
+          <a href="index.html#contact">book</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap content">
+        <div>
+          <span class="kicker">anything. just ask josie</span>
+          <h1>what do you need? josie can do it.</h1>
+          <p class="lead">sometimes you need help that doesn’t fit neatly into a category. that’s where “just ask josie” comes in. it could be refreshing a room with new decor, rearranging furniture, prepping for a move, or finishing those projects that always land at the bottom of your list. josie is the extra set of hands. has a creative eye. and can solve any of your problems. you call when you want life to feel a little easier and your home a lot better.</p>
+        </div>
+        <div class="block">
+          <strong>popular one-offs</strong>
+          <ul>
+            <li>room refresh + material suggestions</li>
+            <li>pre-move edit & labeling system</li>
+            <li>art/plant placement & furniture rearrange</li>
+            <li>finishing punch-lists you’ve postponed</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>visual notes (collage-ready)</h2>
+        <div class="collage">
+          <div class="tile w2 h2"><img src="img/any-1.jpg" alt="project photo 1"/></div>
+          <div class="tile w4"><img src="img/any-2.jpg" alt="project photo 2"/></div>
+          <div class="tile w3 h2"><img src="img/any-3.jpg" alt="project photo 3"/></div>
+          <div class="tile w3"><img src="img/any-4.jpg" alt="project photo 4"/></div>
+          <div class="tile w2"><img src="img/any-5.jpg" alt="project photo 5"/></div>
+          <div class="tile w2 h3"><img src="img/any-6.jpg" alt="project photo 6"/></div>
+          <div class="tile w2"><img src="img/any-7.jpg" alt="project photo 7"/></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <small>© <span id="y"></span> ask josie</small>
+    </div>
+  </footer>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+</body>
+</html>

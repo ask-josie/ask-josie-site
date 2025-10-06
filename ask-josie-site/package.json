@@ -1,0 +1,104 @@
+# create folders
+mkdir -p ~/Desktop/ask-josie-site/netlify/functions
+cd ~/Desktop/ask-josie-site
+
+# create package.json
+cat > package.json <<'JSON'
+{
+  "name": "ask-josie-site",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "resend": "^4.0.0",
+    "twilio": "^4.0.0"
+  }
+}
+JSON
+
+# create serverless function file
+cat > netlify/functions/contact.js <<'JS'
+// netlify/functions/contact.js
+import { Resend } from 'resend';
+import twilio from 'twilio';
+
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  try {
+    const { name, email, phone, service, message, sms_opt_in } = JSON.parse(event.body || '{}');
+
+    if (!name || !email || !service || !message) {
+      return { statusCode: 400, body: 'Missing required fields.' };
+    }
+
+    // Email (Resend)
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const TO_EMAIL = process.env.TO_EMAIL || 'josie@ask-josie.com';
+    const FROM_EMAIL = process.env.FROM_EMAIL || 'no-reply@ask-josie.com'; // must be verified in Resend
+
+    const htmlToJosie = `
+      <div style="font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+        <h2>New inquiry — ${escapeHtml(service)}</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(phone || '—')}</p>
+        <p><strong>Wants SMS updates:</strong> ${sms_opt_in === 'yes' ? 'Yes' : 'No'}</p>
+        <p><strong>Message:</strong></p>
+        <pre style="white-space:pre-wrap;background:#f6f7fb;padding:12px;border-radius:8px;border:1px solid #e8eaf3">${escapeHtml(message)}</pre>
+      </div>
+    `;
+
+    const htmlToClient = `
+      <div style="font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+        <h2>Thanks, ${escapeHtml(name)}!</h2>
+        <p>Your ${escapeHtml(service)} request is in. I’ll get back to you within 1–2 days.</p>
+        <p>— josie</p>
+      </div>
+    `;
+
+    await resend.emails.send({
+      from: `ask josie <${FROM_EMAIL}>`,
+      to: [TO_EMAIL],
+      subject: `New inquiry: ${service} — ${name}`,
+      html: htmlToJosie,
+      reply_to: email
+    });
+
+    await resend.emails.send({
+      from: `ask josie <${FROM_EMAIL}>`,
+      to: [email],
+      subject: `Got it — your ${service} request`,
+      html: htmlToClient
+    });
+
+    // SMS (Twilio) if opted in
+    if (sms_opt_in === 'yes' && phone && phone.trim().length >= 7) {
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const FROM_SMS = process.env.TWILIO_FROM; // +14155551234
+      const cleaned = phone.replace(/[^\d+]/g, '');
+
+      await client.messages.create({
+        body: 'ask josie: thanks for reaching out! josie will contact you within 1–2 days.',
+        from: FROM_SMS,
+        to: cleaned
+      });
+    }
+
+    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+  } catch (err) {
+    console.error(err);
+    return { statusCode: 500, body: 'Server error' };
+  }
+};
+
+function escapeHtml(s = '') {
+  return s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+JS
