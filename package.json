@@ -1,36 +1,58 @@
-# create folders
-mkdir -p ~/Desktop/ask-josie-site/netlify/functions
-cd ~/Desktop/ask-josie-site
-
-# create package.json
-cat > package.json <<'JSON'
-{
-  "name": "ask-josie-site",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "resend": "^4.0.0",
-    "twilio": "^4.0.0"
-  }
-}
-JSON
-
-# create serverless function file
-cat > netlify/functions/contact.js <<'JS'
 // netlify/functions/contact.js
 import { Resend } from 'resend';
 import twilio from 'twilio';
 
+// Utility: consistent JSON responses
+const json = (statusCode, data, extraHeaders = {}) => ({
+  statusCode,
+  headers: {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    ...extraHeaders,
+  },
+  body: JSON.stringify(data),
+});
+
 export const handler = async (event) => {
+  // CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Vary': 'Origin',
+      },
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return json(405, { error: 'Method Not Allowed' });
   }
 
   try {
-    const { name, email, phone, service, message, sms_opt_in } = JSON.parse(event.body || '{}');
+    let payload = {};
+    try {
+      payload = JSON.parse(event.body || '{}');
+    } catch {
+      return json(400, { error: 'Invalid JSON body.' });
+    }
+
+    const {
+      name,
+      email,
+      phone,
+      service,
+      message,
+      sms_opt_in,
+    } = payload;
 
     if (!name || !email || !service || !message) {
-      return { statusCode: 400, body: 'Missing required fields.' };
+      return json(400, { error: 'Missing required fields: name, email, service, message.' });
     }
 
     // Email (Resend)
@@ -58,47 +80,50 @@ export const handler = async (event) => {
       </div>
     `;
 
+    // Send to Josie
     await resend.emails.send({
       from: `ask josie <${FROM_EMAIL}>`,
       to: [TO_EMAIL],
       subject: `New inquiry: ${service} — ${name}`,
       html: htmlToJosie,
-      reply_to: email
+      reply_to: email, // Resend v4 supports snake_case
     });
 
+    // Auto-reply to client
     await resend.emails.send({
       from: `ask josie <${FROM_EMAIL}>`,
       to: [email],
       subject: `Got it — your ${service} request`,
-      html: htmlToClient
+      html: htmlToClient,
     });
 
     // SMS (Twilio) if opted in
     if (sms_opt_in === 'yes' && phone && phone.trim().length >= 7) {
       const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      const FROM_SMS = process.env.TWILIO_FROM; // +14155551234
+      const FROM_SMS = process.env.TWILIO_FROM; // e.g., +14155551234
       const cleaned = phone.replace(/[^\d+]/g, '');
 
-      await client.messages.create({
-        body: 'ask josie: thanks for reaching out! josie will contact you within 1–2 days.',
-        from: FROM_SMS,
-        to: cleaned
-      });
+      if (FROM_SMS) {
+        await client.messages.create({
+          body: 'ask josie: thanks for reaching out! josie will contact you within 1–2 days.',
+          from: FROM_SMS,
+          to: cleaned,
+        });
+      }
     }
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    return json(200, { ok: true });
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: 'Server error' };
+    return json(500, { error: 'Server error' });
   }
 };
 
 function escapeHtml(s = '') {
-  return s
+  return String(s)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 }
-JS
